@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<p><b>Pay Period:</b> {{ period_start }} → {{ period_end }}</p>
+<p><b>Next Payday:</b> {{ next_payday }}</p>
+
+<ul>
+  <li><b>Typical Net Pay:</b> ${{ typical }}</li>
+  <li><b>Extra Income (this period):</b> ${{ income }}</li>
+  <li><b>Expenses (this period):</b> ${{ expense }}</li>
+  <li><b>Remaining:</b> ${{ remaining }}</li>
+  <li><b>Daily Spend Limit:</b> ${{ daily_limit }}</li>
+</ul>
+
+{% if top_category %}
+<p><b>Top spending:</b> {{ top_category }} (${{ top_total }})</p>
+{% endif %}
+
+<h2>Bills Due Before Payday</h2>
+
+{% if bills_due and bills_due|length > 0 %}
+  <p><b>Total due:</b> ${{ bills_total }}</p>
+  <p><b>After bills you’ll have:</b> ${{ after_bills }}</p>
+
+  <ul>
+    {% for b in bills_due %}
+      <li>{{ b.name }} — ${{ b.amount }} (due {{ b.due }})</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No bills due before your next payday 🎉</p>
+{% endif %}
+
+{% endblock %}
+

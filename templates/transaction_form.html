@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Add Transaction</h1>
+
+<form method="post">
+  <label>Type</label><br>
+  <select name="kind">
+    <option value="expense">Expense</option>
+    <option value="income">Income</option>
+  </select><br><br>
+
+  <label>Amount (e.g., 12.50)</label><br>
+  <input name="amount" required><br><br>
+
+  <label>Category</label><br>
+  <select name="category">
+    {% for c in categories %}
+      <option value="{{ c }}">{{ c }}</option>
+    {% endfor %}
+  </select><br><br>
+
+  <label>Date (YYYY-MM-DD)</label><br>
+  <input name="occurred_on" value="{{ default_date }}" required><br><br>
+
+  <label>Note (optional)</label><br>
+  <input name="note"><br><br>
+
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

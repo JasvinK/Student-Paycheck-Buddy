@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Budgets (This Pay Period)</h1>
+
+<h3>Add / Update Budget</h3>
+<form method="post" style="margin-bottom: 20px;">
+  <label>Category</label><br>
+  <select name="category">
+    {% for c in categories %}
+      <option value="{{ c }}">{{ c }}</option>
+    {% endfor %}
+  </select><br><br>
+
+  <label>Limit for this pay period (e.g., 200.00)</label><br>
+  <input name="limit" required><br><br>
+
+  <button type="submit">Save Budget</button>
+</form>
+
+<h3>Your Budgets</h3>
+
+{% if not items %}
+  <p>No budgets yet. Add one above (example: Groceries = 120.00).</p>
+{% else %}
+  <table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+      <th>Category</th>
+      <th>Spent</th>
+      <th>Limit</th>
+      <th>Remaining</th>
+      <th>Progress</th>
+    </tr>
+    {% for i in items %}
+    <tr>
+      <td>{{ i.category }}</td>
+      <td>${{ i.spent }}</td>
+      <td>${{ i.limit }}</td>
+      <td>${{ i.remaining }}</td>
+      <td style="min-width:220px;">
+        <div class="bar">
+            <div class="fill {{ i.status }}" data-pct="{{ i.pct }}"></div>
+        </div>
+        <small>{{ i.pct }}%</small>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+
+<script>
+  document.querySelectorAll(".fill").forEach(el => {
+    const pct = el.dataset.pct || "0";
+    el.style.width = pct + "%";
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Setup (Biweekly)</h1>
+<form method="post">
+  <label>Next Payday (YYYY-MM-DD)</label><br>
+  <input name="next_payday" placeholder="2026-02-27" required><br><br>
+
+  <label>Typical Net Pay (e.g., 850.00)</label><br>
+  <input name="typical_net_pay" placeholder="850.00" required><br><br>
+
+  <button type="submit">Save</button>
+</form>
+{% endblock %}
+

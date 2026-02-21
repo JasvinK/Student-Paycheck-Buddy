@@ -1,0 +1,22 @@
+body { font-family: system-ui, Arial, sans-serif; margin: 0; }
+nav { padding: 12px; background: #f2f2f2; display: flex; gap: 12px; }
+main { padding: 16px; max-width: 900px; margin: 0 auto; }
+.flash { margin: 12px 0; padding: 10px; background: #fff3cd; }
+a { text-decoration: none; }
+
+.bar {
+  background: #eee;
+  height: 14px;
+  width: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 14px;
+  width: 0%;
+  background: #7b61ff;
+}
+
+.fill.warn { background: #f5a623; }
+.fill.over { background: #d0021b; }
