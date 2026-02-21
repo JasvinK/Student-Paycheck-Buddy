@@ -38,6 +38,22 @@ def create_app():
             db.executescript(f.read())
         db.commit()
 
+    def ensure_db():
+        db_path = app.config["DATABASE"]
+        # If DB file doesn't exist, create it + tables
+        if not os.path.exists(db_path):
+            init_db()
+            return
+
+        # If DB exists but tables are missing, create them
+        try:
+            db = get_db()
+            db.execute("SELECT 1 FROM users LIMIT 1;")
+        except sqlite3.OperationalError:
+            init_db()
+
+    ensure_db()
+
     @app.route("/init")
     def init():
         init_db()
