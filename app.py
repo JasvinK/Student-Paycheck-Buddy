@@ -38,8 +38,93 @@ def create_app():
             db.executescript(f.read())
         db.commit()
 
+    # -------- Demo Mode helpers --------
+    DEMO_EMAIL = "demo@paycheckbuddy.com"
+
+
+
+    def ensure_demo_user():
+        """Create a demo user if missing, return demo user_id."""
+        db = get_db()
+        row = db.execute("SELECT id FROM users WHERE email = ?", (DEMO_EMAIL,)).fetchone()
+        if row:
+            return row["id"]
+
+        db.execute(
+            "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+            (DEMO_EMAIL, generate_password_hash("demo1234"))
+        )
+        db.commit()
+        row = db.execute("SELECT id FROM users WHERE email = ?", (DEMO_EMAIL,)).fetchone()
+        return row["id"]
+
+    def reset_demo_data(demo_user_id: int):
+        """Wipe and re-seed demo user's data so the demo always looks good."""
+        db = get_db()
+
+        # delete child tables first (foreign keys)
+        db.execute("DELETE FROM transactions WHERE user_id = ?", (demo_user_id,))
+        db.execute("DELETE FROM budgets WHERE user_id = ?", (demo_user_id,))
+        db.execute("DELETE FROM recurring_bills WHERE user_id = ?", (demo_user_id,))
+        db.execute("DELETE FROM pay_schedules WHERE user_id = ?", (demo_user_id,))
+
+        # seed a pay schedule
+        next_payday = (date.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+        typical_net_pay_cents = 85000
+
+        db.execute("""
+            INSERT INTO pay_schedules (user_id, frequency, next_payday, typical_net_pay_cents)
+            VALUES (?, 'biweekly', ?, ?)
+        """, (demo_user_id, next_payday, typical_net_pay_cents))
+
+        # seed a few bills
+        db.execute("""
+            INSERT INTO recurring_bills (user_id, name, amount_cents, due_day, active)
+            VALUES (?, ?, ?, ?, 1)
+        """, (demo_user_id, "Phone", 4900, min(20, date.today().day + 2)))
+
+        db.execute("""
+            INSERT INTO recurring_bills (user_id, name, amount_cents, due_day, active)
+            VALUES (?, ?, ?, ?, 1)
+        """, (demo_user_id, "Spotify", 1199, min(25, date.today().day + 5)))
+
+        # seed budgets
+        db.execute("""
+            INSERT INTO budgets (user_id, category, limit_cents)
+            VALUES (?, ?, ?)
+        """, (demo_user_id, "Groceries", 25000))
+        db.execute("""
+            INSERT INTO budgets (user_id, category, limit_cents)
+            VALUES (?, ?, ?)
+        """, (demo_user_id, "Eating Out", 8000))
+        db.execute("""
+            INSERT INTO budgets (user_id, category, limit_cents)
+            VALUES (?, ?, ?)
+        """, (demo_user_id, "Coffee", 2500))
+
+        # seed transactions (current pay period-ish)
+        today_str = date.today().strftime("%Y-%m-%d")
+        yesterday_str = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+        two_days_ago_str = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d")
+
+        demo_tx = [
+            ("expense", 1250, "Groceries", two_days_ago_str, "Snacks"),
+            ("expense", 580, "Coffee", yesterday_str, "Latte"),
+            ("expense", 2400, "Eating Out", today_str, "Lunch"),
+            ("income", 10000, "Other", today_str, "Tutoring"),
+        ]
+        for kind, cents, cat, occurred_on, note in demo_tx:
+            db.execute("""
+                INSERT INTO transactions (user_id, kind, amount_cents, category, occurred_on, note)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (demo_user_id, kind, cents, cat, occurred_on, note))
+
+        db.commit()
+
+
     def ensure_db():
         db_path = app.config["DATABASE"]
+
         # If DB file doesn't exist, create it + tables
         if not os.path.exists(db_path):
             init_db()
@@ -51,9 +136,7 @@ def create_app():
             db.execute("SELECT 1 FROM users LIMIT 1;")
         except sqlite3.OperationalError:
             init_db()
-
-    ensure_db()
-
+            
     @app.route("/init")
     def init():
         init_db()
@@ -104,6 +187,17 @@ def create_app():
         return period_start, period_end, next_payday
 
     # -------- Routes --------
+    @app.route("/demo")
+    def demo():
+        ensure_db()
+        demo_user_id = ensure_demo_user()
+        reset_demo_data(demo_user_id)
+
+        session.clear()
+        session["user_id"] = demo_user_id
+        flash("Demo mode: loaded sample data.")
+        return redirect(url_for("dashboard"))
+
     @app.route("/")
     def home():
         if current_user_id():
@@ -272,6 +366,25 @@ def create_app():
             days_left = 1
         daily_limit = remaining // days_left
 
+        safe_to_spend_today_cents = daily_limit
+
+        # --- forecast: are you on track? ---
+        days_passed = (date.today() - start).days + 1
+        if days_passed < 1:
+            days_passed = 1
+
+        spent_so_far = totals["expense"]
+        avg_spend_per_day = spent_so_far // days_passed
+
+        projected_total_expense = avg_spend_per_day * 14  # biweekly period
+        projected_remaining = typical + totals["income"] - projected_total_expense
+
+        forecast_status = "on_track"
+        if projected_remaining < 0:
+            forecast_status = "over"
+        elif projected_remaining < (typical * 0.1):
+            forecast_status = "tight"
+
         # --- top category this pay period ---
         top = db.execute("""
             SELECT category, SUM(amount_cents) AS total
@@ -284,6 +397,24 @@ def create_app():
             LIMIT 1
         """, (user_id, ymd(start), ymd(end))).fetchone()
 
+        # --- spending forecast ---
+        days_passed = (date.today() - start).days + 1
+        if days_passed < 1:
+            days_passed = 1
+
+        spent_so_far = totals["expense"]
+        avg_spend_per_day = spent_so_far // days_passed
+        period_days = (end - start).days + 1
+        projected_total_expense = avg_spend_per_day * period_days
+
+        # IMPORTANT: include income (same logic as "remaining")
+        projected_remaining = typical + totals["income"] - projected_total_expense
+
+        overspending = projected_remaining < 0
+        forecast_status = "On track" if not overspending else "Overspending risk"
+
+
+
         return render_template(
             "dashboard.html",
             period_start=ymd(start),
@@ -294,12 +425,22 @@ def create_app():
             expense=money_from_cents(totals["expense"]),
             remaining=money_from_cents(remaining),
             daily_limit=money_from_cents(daily_limit),
+            safe_to_spend_today=money_from_cents(safe_to_spend_today_cents),
+
             top_category=(top["category"] if top else None),
             top_total=(money_from_cents(top["total"]) if top else None),
+
             bills_due=due_before,
             bills_total=money_from_cents(total_due_cents),
             after_bills=money_from_cents(after_bills_cents),
-        )
+
+            # Forecast feature
+            avg_spend=money_from_cents(avg_spend_per_day),
+            projected_expense=money_from_cents(projected_total_expense),
+            projected_remaining=money_from_cents(projected_remaining),
+            forecast_status=forecast_status,
+            overspending=overspending,
+    )
 
     
     @app.route("/transactions")
@@ -497,9 +638,11 @@ def create_app():
 
             return render_template("bills.html", rows=rows)
 
+    with app.app_context():
+        ensure_db()
+
     return app
 
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True)
-

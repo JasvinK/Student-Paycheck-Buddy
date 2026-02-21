@@ -13,6 +13,24 @@
   <li><b>Daily Spend Limit:</b> ${{ daily_limit }}</li>
 </ul>
 
+<hr>
+
+<h2>Smart Spending Forecast</h2>
+
+<p><b>Average daily spending (this period):</b> ${{ avg_spend }}</p>
+<p><b>Safe to spend today:</b> ${{ safe_to_spend_today }}</p>
+
+{% if overspending %}
+  <p style="color:red;">
+    At this pace, you may run out of money before payday.
+  </p>
+{% else %}
+  <p style="color:green;">
+    You are on track to stay within budget.
+  </p>
+{% endif %}
+
+
 {% if top_category %}
 <p><b>Top spending:</b> {{ top_category }} (${{ top_total }})</p>
 {% endif %}
@@ -29,7 +47,7 @@
     {% endfor %}
   </ul>
 {% else %}
-  <p>No bills due before your next payday 🎉</p>
+  <p>No bills due before your next payday </p>
 {% endif %}
 
 {% endblock %}

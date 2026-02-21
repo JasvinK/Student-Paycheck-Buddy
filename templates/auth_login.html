@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Login</h1>
+
 <form method="post">
   <label>Email</label><br>
   <input name="email" type="email" required><br><br>
@@ -10,6 +11,14 @@
 
   <button type="submit">Login</button>
 </form>
+
+<!-- ⭐ DEMO BUTTON ADDED HERE -->
+<hr style="margin:16px 0;">
+
+<a href="{{ url_for('demo') }}">
+  <button type="button">Try Demo</button>
+</a>
+
 <p>No account? <a href="{{ url_for('signup') }}">Sign up</a></p>
 {% endblock %}
 
