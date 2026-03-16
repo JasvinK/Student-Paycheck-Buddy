@@ -1,41 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1>Transactions</h1>
 
-<form method="get" style="margin-bottom: 16px;">
-  <label>Type:</label>
-  <select name="kind">
-    <option value="">All</option>
-    <option value="expense">Expense</option>
-    <option value="income">Income</option>
-  </select>
+<div class="card">
+  <h2>Filter Transactions</h2>
 
-  <label style="margin-left: 12px;">Category:</label>
-  <input name="category" placeholder="e.g., Groceries">
+  <form method="get">
+    <label>Type</label>
+    <select name="kind">
+      <option value="">All</option>
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+    </select>
 
-  <button type="submit">Filter</button>
-</form>
+    <label>Category</label>
+    <input name="category" placeholder="e.g. Groceries">
 
-<table border="1" cellpadding="8" cellspacing="0">
-  <tr>
-    <th>Date</th>
-    <th>Type</th>
-    <th>Category</th>
-    <th>Amount</th>
-    <th>Note</th>
-  </tr>
-  {% for r in rows %}
-  <tr>
-    <td>{{ r["occurred_on"] }}</td>
-    <td>{{ r["kind"] }}</td>
-    <td>{{ r["category"] }}</td>
-    <td>${{ "%.2f"|format(r["amount_cents"]/100) }}</td>
-    <td>{{ r["note"] or "" }}</td>
-  </tr>
-  {% endfor %}
-</table>
+    <button type="submit">Apply Filters</button>
+  </form>
+</div>
 
-{% if not rows %}
-<p>No transactions yet. Click <b>+ Add</b> to create one.</p>
-{% endif %}
+<div class="card">
+  <h2>Transaction History</h2>
+
+  {% if rows %}
+    <table>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Note</th>
+      </tr>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r["occurred_on"] }}</td>
+        <td>{{ r["kind"] }}</td>
+        <td>{{ r["category"] }}</td>
+        <td>${{ "%.2f"|format(r["amount_cents"]/100) }}</td>
+        <td>{{ r["note"] or "" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No transactions yet.</p>
+  {% endif %}
+</div>
+
 {% endblock %}

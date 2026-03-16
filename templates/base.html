@@ -4,27 +4,31 @@
   <meta charset="utf-8" />
   <title>{{ title or "Student Paycheck Budget Buddy" }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body>
-  <nav>
-    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('transactions') }}">Transactions</a>
-    <a href="{{ url_for('transaction_new') }}">+ Add</a>
-    <a href="{{ url_for('budgets') }}">Budgets</a>
-    <a href="{{ url_for('logout') }}">Logout</a>
-  </nav>
+  <div class="page">
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('transactions') }}">Transactions</a>
+      <a href="{{ url_for('transaction_new') }}">+ Add</a>
+      <a href="{{ url_for('budgets') }}">Budgets</a>
+      <a href="{{ url_for('bills') }}">Bills</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="flash">
-        {% for m in messages %}<div>{{ m }}</div>{% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+    <main class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">
+            {{ messages[0] }}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
 </body>
 </html>
-

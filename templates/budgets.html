@@ -1,54 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Budgets (This Pay Period)</h1>
 
-<h3>Add / Update Budget</h3>
-<form method="post" style="margin-bottom: 20px;">
-  <label>Category</label><br>
-  <select name="category">
-    {% for c in categories %}
-      <option value="{{ c }}">{{ c }}</option>
-    {% endfor %}
-  </select><br><br>
+<h1>Budgets</h1>
 
-  <label>Limit for this pay period (e.g., 200.00)</label><br>
-  <input name="limit" required><br><br>
+<div class="card">
+  <h2>Add / Update Budget</h2>
 
-  <button type="submit">Save Budget</button>
-</form>
+  <form method="post">
+    <label>Category</label>
+    <select name="category">
+      {% for c in categories %}
+        <option value="{{ c }}">{{ c }}</option>
+      {% endfor %}
+    </select>
 
-<h3>Your Budgets</h3>
+    <label>Limit for this pay period</label>
+    <input name="limit" placeholder="e.g. 120.00" required>
 
-{% if not items %}
-  <p>No budgets yet. Add one above (example: Groceries = 120.00).</p>
-{% else %}
-  <table border="1" cellpadding="8" cellspacing="0">
-    <tr>
-      <th>Category</th>
-      <th>Spent</th>
-      <th>Limit</th>
-      <th>Remaining</th>
-      <th>Progress</th>
-    </tr>
+    <button type="submit">Save Budget</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Your Budget Progress</h2>
+
+  {% if not items %}
+    <p>No budgets yet. Add one above to get started.</p>
+  {% else %}
     {% for i in items %}
-    <tr>
-      <td>{{ i.category }}</td>
-      <td>${{ i.spent }}</td>
-      <td>${{ i.limit }}</td>
-      <td>${{ i.remaining }}</td>
-      <td style="min-width:220px;">
-        <div class="bar">
-            <div class="fill {{ i.status }}" data-pct="{{ i.pct }}"></div>
+      <div class="budget-item">
+        <div class="budget-row">
+          <div>
+            <strong>{{ i.category }}</strong><br>
+            <span class="muted">Spent: ${{ i.spent }} / ${{ i.limit }}</span>
+          </div>
+          <div>
+            <strong>${{ i.remaining }}</strong><br>
+            <span class="muted">remaining</span>
+          </div>
         </div>
-        <small>{{ i.pct }}%</small>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-{% endif %}
 
+        <div class="progress">
+            <div class="progress-fill {{ i.status }}" data-pct="{{ i.pct }}"></div>
+        </div>
+
+        <div class="muted">{{ i.pct }}% used</div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
 <script>
-  document.querySelectorAll(".fill").forEach(el => {
+  document.querySelectorAll(".progress-fill").forEach(el => {
     const pct = el.dataset.pct || "0";
     el.style.width = pct + "%";
   });

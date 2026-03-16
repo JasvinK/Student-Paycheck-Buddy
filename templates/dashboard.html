@@ -1,54 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1>Dashboard</h1>
 
-<p><b>Pay Period:</b> {{ period_start }} → {{ period_end }}</p>
-<p><b>Next Payday:</b> {{ next_payday }}</p>
+<div class="card">
+  <p><b>Pay Period:</b> {{ period_start }} → {{ period_end }}</p>
+  <p><b>Next Payday:</b> {{ next_payday }}</p>
 
-<ul>
-  <li><b>Typical Net Pay:</b> ${{ typical }}</li>
-  <li><b>Extra Income (this period):</b> ${{ income }}</li>
-  <li><b>Expenses (this period):</b> ${{ expense }}</li>
-  <li><b>Remaining:</b> ${{ remaining }}</li>
-  <li><b>Daily Spend Limit:</b> ${{ daily_limit }}</li>
-</ul>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Typical Net Pay</div>
+      <div class="stat-value">${{ typical }}</div>
+    </div>
 
-<hr>
+    <div class="stat">
+      <div class="stat-label">Extra Income</div>
+      <div class="stat-value">${{ income }}</div>
+    </div>
 
-<h2>Smart Spending Forecast</h2>
+    <div class="stat">
+      <div class="stat-label">Expenses</div>
+      <div class="stat-value">${{ expense }}</div>
+    </div>
 
-<p><b>Average daily spending (this period):</b> ${{ avg_spend }}</p>
-<p><b>Safe to spend today:</b> ${{ safe_to_spend_today }}</p>
+    <div class="stat">
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value">${{ remaining }}</div>
+    </div>
 
-{% if overspending %}
-  <p style="color:red;">
-    At this pace, you may run out of money before payday.
-  </p>
-{% else %}
-  <p style="color:green;">
-    You are on track to stay within budget.
-  </p>
-{% endif %}
+    <div class="stat">
+      <div class="stat-label">Safe to Spend Today</div>
+      <div class="stat-value">${{ safe_to_spend_today }}</div>
+    </div>
+  </div>
+</div>
 
+<div class="grid">
+  <div class="card">
+    <h2>Smart Spending Forecast</h2>
+    <p><b>Average daily spending:</b> ${{ avg_spend }}</p>
 
-{% if top_category %}
-<p><b>Top spending:</b> {{ top_category }} (${{ top_total }})</p>
-{% endif %}
+    {% if overspending %}
+      <p class="bad-text">At this pace, you may run out of money before payday.</p>
+    {% else %}
+      <p class="good-text">You are on track to stay within budget.</p>
+    {% endif %}
 
-<h2>Bills Due Before Payday</h2>
+    {% if top_category %}
+      <hr>
+      <p><b>Top spending:</b> {{ top_category }} (${{ top_total }})</p>
+    {% endif %}
+  </div>
 
-{% if bills_due and bills_due|length > 0 %}
-  <p><b>Total due:</b> ${{ bills_total }}</p>
-  <p><b>After bills you’ll have:</b> ${{ after_bills }}</p>
+  <div class="card">
+    <h2>Bills Due Before Payday</h2>
 
-  <ul>
-    {% for b in bills_due %}
-      <li>{{ b.name }} — ${{ b.amount }} (due {{ b.due }})</li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No bills due before your next payday </p>
-{% endif %}
+    {% if bills_due and bills_due|length > 0 %}
+      <p><b>Total due:</b> ${{ bills_total }}</p>
+      <p><b>After bills you’ll have:</b> ${{ after_bills }}</p>
+
+      <ul>
+        {% for b in bills_due %}
+          <li>{{ b.name }} — ${{ b.amount }} (due {{ b.due }})</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No bills due before your next payday 🎉</p>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}
-
